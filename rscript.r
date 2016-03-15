@@ -5,7 +5,8 @@ X <- X[complete.cases(X),]
 
 SPdata <- read.csv("~/timeseries443/SPdata.txt")
 View(SPdata)
-sp.ts <- ts(SPdata$VALUE, frequency = 5)
+sp.ts <- ts(SPdata$VALUE, frequency = 5, include.mean=TRUE)
 ts.plot(sp.ts)
-
+acf(sp.ts)
+pacf(sp.ts)
 
