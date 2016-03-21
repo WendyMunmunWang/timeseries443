@@ -1,7 +1,6 @@
 spdata <- read.csv("~/Documents/STAT443/Stat443_project/timeseries443/spdata.csv")
 View(spdata)
-sp.ts <- ts(rev(spdata$Adj.Close), start = c(1990,01,3), end = c(2016,03,14))
-#sp.ts <- ts(rev(spdata$Adj.Close))
+sp.ts <- ts(rev(spdata$Adj.Close))
 ts.plot(sp.ts)
 
 install.packages('astsa')
@@ -15,6 +14,9 @@ acf(sp.ts.diff)
 pacf(sp.ts.diff)
 spec.pgram(sp.ts.diff, log="no")
 
+#ARIMA Model Validation
+p1d1q1P0D0Q0<-arima(sp.ts.diff, order=c(1, 1, 1), seasonal = list(order=c(0, 0, 0)))
+tsdiag(p1d1q1P0D0Q0)
 #Take the forward ratio
 install.packages('FSA')
 library(FSA)
