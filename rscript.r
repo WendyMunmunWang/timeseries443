@@ -1,10 +1,49 @@
-spdata <- read.csv("~/Documents/STAT443/Stat443_project/timeseries443/spdata.csv")
+# -----------------------------------------------------------------------------
+# Function declarations
+# -----------------------------------------------------------------------------
+
+install_new_packages <- function(packages) {
+  #' Installs each packages in packages if not already installed
+  #' 
+  #' @param packages A character vector containing the names of packages
+  
+  # decide which packages are needed
+  to_install <- !(needed_packages %in% installed.packages()[, "Package"])
+  new_packages <- packages[to_install]
+  
+  # do installation if needed
+  if(length(new_packages) > 0) {
+    install.packages(new_packages)
+  } else {
+    # let user know the status
+    message("No new packages need to be installed!")
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Set up local R environment
+# -----------------------------------------------------------------------------
+
+packages <- c("astsa", "dplyr")
+install_new_packages(packages)
+
+# -----------------------------------------------------------------------------
+# Read data
+# -----------------------------------------------------------------------------
+
+# Uncomment the correct director for your computer (or add it!):
+dir <- "~/Documents/time_series_443/PROJECT/spdata.csv" # Geoff's
+# dir <- "~/Documents/STAT443/Stat443_project/timeseries443/spdata.csv" # Wendy's
+
+spdata <- read.csv(dir)
+
+# -----------------------------------------------------------------------------
+# Explore data and candidate SARIMA models
+# -----------------------------------------------------------------------------
+
 View(spdata)
 sp.ts <- ts(rev(spdata$Adj.Close))
 ts.plot(sp.ts)
-
-install.packages('astsa')
-library(astsa)
 spec.pgram(sp.ts, log="no")
 
 #Take the first difference
