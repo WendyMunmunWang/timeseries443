@@ -8,7 +8,7 @@ install_new_packages <- function(packages) {
   #' @param packages A character vector containing the names of packages
   
   # decide which packages are needed
-  to_install <- !(needed_packages %in% installed.packages()[, "Package"])
+  to_install <- !(packages %in% installed.packages()[, "Package"])
   new_packages <- packages[to_install]
   
   # do installation if needed
@@ -24,8 +24,9 @@ install_new_packages <- function(packages) {
 # Set up local R environment
 # -----------------------------------------------------------------------------
 
-packages <- c("astsa", "dplyr")
+packages <- c("astsa", "dplyr", "FSA", "gogarch")
 install_new_packages(packages)
+library(FSA)
 
 # -----------------------------------------------------------------------------
 # Read data
@@ -61,13 +62,15 @@ tsdiag(p1d1q1P0D0Q0)
 hw <-HoltWinters(sp.ts.diff, alpha=NULL,beta=NULL, gamma=NULL)
 plot(hw)
 #Take the forward ratio
-install.packages('FSA')
-library(FSA)
 sp.ts.ratio <- lagratio(sp.ts, lag = 1L, recursion = 1L, direction = "forward")
 
 plot(sp.ts.ratio)
 acf(sp.ts.ratio)
 pacf(sp.ts.ratio)
 spec.pgram(sp.ts.ratio, log="no")
+
+# Ratio stuff
+# take data weekly, every friday
+# e.g. this friday is x, next onis y, lpog ratio
 
 
