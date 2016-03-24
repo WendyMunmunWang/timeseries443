@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------
 
 install_new_packages <- function(packages) {
-  #' Installs each packages in packages if not already installed
+  #' Installs each package in packages if not already installed
   #' 
   #' @param packages A character vector containing the names of packages
   
@@ -31,9 +31,9 @@ install_new_packages(packages)
 # Read data
 # -----------------------------------------------------------------------------
 
-# Uncomment the correct director for your computer (or add it!):
-dir <- "~/Documents/time_series_443/PROJECT/spdata.csv" # Geoff's
-# dir <- "~/Documents/STAT443/Stat443_project/timeseries443/spdata.csv" # Wendy's
+# Uncomment the correct directory for your computer (or add it!):
+dir <- "~/Documents/time_series_443/PROJECT/spdata.csv" # Geoff
+# dir <- "~/Documents/STAT443/Stat443_project/timeseries443/spdata.csv" # Wendy
 
 spdata <- read.csv(dir)
 
