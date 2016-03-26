@@ -55,7 +55,7 @@ spec.pgram(sp.ts, log="no")
 
 #Take the first difference
 sp.ts.diff <- diff(sp.ts)
-plot(sp.ts.diff)
+ts.plot(sp.ts.diff)
 acf(sp.ts.diff)
 pacf(sp.ts.diff)
 spec.pgram(sp.ts.diff, log="no")
@@ -80,7 +80,7 @@ plot(hw)
 #Take the forward ratio
 sp.ts.ratio <- lagratio(sp.ts, lag = 1L, recursion = 1L, direction = "forward")
 
-plot(sp.ts.ratio)
+ts.plot(sp.ts.ratio)
 acf(sp.ts.ratio)
 pacf(sp.ts.ratio)
 spec.pgram(sp.ts.ratio, log="no")
