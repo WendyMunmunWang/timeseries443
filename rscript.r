@@ -61,13 +61,9 @@ pacf(sp.ts.diff)
 spec.pgram(sp.ts.diff, log="no")
 
 #ARIMA Model Validation
-p1d1q1P0D0Q0<-arima(sp.ts.diff, order=c(1, 1, 1), seasonal = list(order=c(0, 0, 0)))
+p1d1q1P0D0Q0<-arima(sp.ts, order=c(1, 1, 1), seasonal = list(order=c(0, 0, 0)))
 tsdiag(p1d1q1P0D0Q0)
 AIC(p1d1q1P0D0Q0)
-
-p1d2q1P0D0Q0<-arima(sp.ts, order=c(1, 2, 1), seasonal = list(order=c(0, 0, 0)))
-tsdiag(p1d2q1P0D0Q0)
-AIC(p1d2q1P0D0Q0)
 
 #Holt Winter
 hw <-HoltWinters(sp.ts.diff, alpha=NULL,beta=NULL, gamma=NULL)
