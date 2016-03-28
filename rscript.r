@@ -50,7 +50,7 @@ pacf(sp.ts)
 spec.pgram(sp.ts, log="no")
 
 # -----------------------------------------------------------------------------
-# SARIMA models for data with first difference
+# Model One: SARIMA models for data with first difference
 # -----------------------------------------------------------------------------
 
 #Take the first difference
@@ -70,19 +70,21 @@ hw <-HoltWinters(sp.ts.diff, alpha=NULL,beta=NULL, gamma=NULL)
 plot(hw)
 
 # -----------------------------------------------------------------------------
-# SARIMA models for data after forward ratio
+# Model Two: SARIMA models for data after taking forward ratio, applying 
+#            log function, then add 100.
 # -----------------------------------------------------------------------------
 
-#Take the forward ratio
+#Take the forward ratio, applying log function, then add 100
 sp.ts.ratio <- lagratio(sp.ts, lag = 1L, recursion = 1L, direction = "forward")
+sp.ts.ratio.log.100 <- log(sp.ts.ratio) + 100
 
-ts.plot(sp.ts.ratio)
-acf(sp.ts.ratio)
-pacf(sp.ts.ratio)
-spec.pgram(sp.ts.ratio, log="no")
+ts.plot(sp.ts.ratio.log.100)
+acf(sp.ts.ratio.log.100)
+pacf(sp.ts.ratio.log.100)
+spec.pgram(sp.ts.ratio.log.100, log="no")
 
 #ARIMA Model Validation
-p3d0q0P0D0Q0<-arima(sp.ts.ratio, order=c(3, 0, 0), seasonal = list(order=c(0, 0, 0)))
+p3d0q0P0D0Q0<-arima(sp.ts.ratio.log.100, order=c(3, 0, 0), seasonal = list(order=c(0, 0, 0)))
 tsdiag(p3d0q0P0D0Q0)
 AIC(p3d0q0P0D0Q0)
 
