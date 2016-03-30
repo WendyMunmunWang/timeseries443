@@ -24,7 +24,7 @@ install_new_packages <- function(packages) {
 # Set up local R environment
 # -----------------------------------------------------------------------------
 
-packages <- c("astsa", "dplyr", "FSA")
+packages <- c("astsa", "dplyr", "FSA", "rugarch")
 install_new_packages(packages)
 library(FSA)
 
@@ -92,4 +92,21 @@ AIC(p3d0q0P0D0Q0)
 # take data weekly, every friday
 # e.g. this friday is x, next onis y, lpog ratio
 
-
+# -----------------------------------------------------------------------------
+# Model Three: GARCH
+# -----------------------------------------------------------------------------
+library(rugarch)
+# experiment with GARCH model using parameters from best SARIMA model
+# financial markets are modelled better by t-distribution, use "std"
+model<-ugarchspec(
+  variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
+  mean.model = list(armaOrder = c(3, 0), include.mean = TRUE),
+  distribution.model = "std"
+)
+#
+N <- length(sp.ts)
+# TODO: what is the definition of a return? Why multiply by 100 and take ratio of successive days?
+sp.ts.returns=100*(log(sp.ts[2:N])-log(sp.ts[1:(N-1)]))
+modelfit = ugarchfit(spec = model, data = sp.ts.returns)
+modelfit
+plot(modelfit)
