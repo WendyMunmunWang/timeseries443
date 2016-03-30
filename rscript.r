@@ -24,7 +24,7 @@ install_new_packages <- function(packages) {
 # Set up local R environment
 # -----------------------------------------------------------------------------
 
-packages <- c("astsa", "dplyr", "FSA", "gogarch")
+packages <- c("astsa", "dplyr", "FSA")
 install_new_packages(packages)
 library(FSA)
 
