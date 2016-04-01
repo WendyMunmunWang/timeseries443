@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Function declarations
 # -----------------------------------------------------------------------------
-
+# new comment
 install_new_packages <- function(packages) {
   #' Installs each package in parameter packages if not already installed
   #' 
