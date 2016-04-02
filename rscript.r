@@ -37,8 +37,8 @@ library(forecast)
 # -----------------------------------------------------------------------------
 
 # Uncomment the correct directory for your computer (or add it!):
-dir <- "~/Documents/time_series_443/PROJECT/SP500janmar.csv" # Geoff
-# dir <- "~/Documents/STAT443/Stat443_project/timeseries443/spdata.csv" # Wendy
+# dir <- "~/Documents/time_series_443/PROJECT/SP500janmar.csv" # Geoff
+dir <- "~/Documents/STAT443/Stat443_project/timeseries443/SP500janmar.csv" # Wendy
 
 spdata <- read.csv(dir, na.strings=".")
 impute_avg <- function(i, df) {
@@ -70,17 +70,19 @@ spec.pgram(sp.ts, log="no")
 # -----------------------------------------------------------------------------
 
 #Take the first difference
-sp.ts.diff <- diff(sp.ts, 1)
-ts.plot(sp.ts.diff)
-acf(sp.ts.diff)
-pacf(sp.ts.diff)
-spec.pgram(sp.ts.diff, log="no")
+sp.ts_1diff <- diff(sp.ts, 1)
+ts.plot(sp.ts_1diff)
+sp.ts_2diff <- diff(sp.ts_1diff, 1)
+ts.plot(sp.ts_2diff)
+acf(sp.ts_2diff)
+pacf(sp.ts_2diff)
+spec.pgram(sp.ts_2diff, log="no")
 
 #ARIMA Model Validation
-p1d1q1P0D0Q0<-arima(sp.ts, order=c(1, 1, 1), seasonal = list(order=c(0, 0, 0)))
-tsdiag(p1d1q1P0D0Q0, lag.max=40)
-AIC(p1d1q1P0D0Q0)
-forecast(p1d1q1P0D0Q0, h=5)
+p2d2q1P0D0Q0<-arima(sp.ts, order=c(2, 2, 1), seasonal = list(order=c(0, 0, 0)))
+tsdiag(p2d2q1P0D0Q0, lag.max=40)
+AIC(p2d2q1P0D0Q0)
+forecast(p2d2q1P0D0Q0, h=5)
 
 # -----------------------------------------------------------------------------
 # Holt Winter
