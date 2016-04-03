@@ -51,7 +51,6 @@ for (i in which(!complete.cases(spdata.full))) {
 }
 # drop additional cases where two values are missing
 spdata.full <- spdata.full[complete.cases(spdata.full),]
-
 sp.ts <- ts(spdata.full$VALUE)
 
 # -----------------------------------------------------------------------------
@@ -60,10 +59,20 @@ sp.ts <- ts(spdata.full$VALUE)
 
 # View(spdata)
 sp.ts <- ts(rev(spdata$Adj.Close))
-ts.plot(sp.ts)
+ts.plot(sp.ts, main = "S&P 500: 64 Observations", ylab="Closing Price", 
+        xlab="Time (business days since 01/04/2016)")
 acf(sp.ts, lag.max=40)
 pacf(sp.ts)
-spec.pgram(sp.ts, log="no")
+
+# -----------------------------------------------------------------------------
+# Evaluate whether frequency-domain analysis in time series is appropriate
+# -----------------------------------------------------------------------------
+spectrum <- spec.pgram(sp.ts, log="no", 
+           main="S&P 500: 64 Observations\nRaw Periodogram")
+1 / spectrum$freq[which.max(spectrum$spec)]
+# next peak occurs at frequency index 4
+1 / spectrum$freq[4]
+# Conclusion: frequency domain analysis will not be effective here
 
 # -----------------------------------------------------------------------------
 # Model One: SARIMA models for data with first difference
@@ -71,25 +80,91 @@ spec.pgram(sp.ts, log="no")
 
 #Take the first difference
 sp.ts_1diff <- diff(sp.ts, 1)
-ts.plot(sp.ts_1diff)
+ts.plot(sp.ts_1diff, main="First Difference of S&P 500 Series, X(t)", 
+        xlab="Time (days since 01/04/2016)", ylab="X(t) - X(t+1)")
 sp.ts_2diff <- diff(sp.ts_1diff, 1)
-ts.plot(sp.ts_2diff)
-acf(sp.ts_2diff)
-pacf(sp.ts_2diff)
+ts.plot(sp.ts_2diff, main="First Difference of X(t), Y(t)", 
+                            xlab="Time (days since 01/04/2016)",
+                  ylab="Y(t) = X(t) - 2X(t-1) + X(t+2)")
+par(mfrow=c(1,2)) # plot side by side
+acf(sp.ts_2diff, main = "ACF for Y(t)")
+pacf(sp.ts_2diff, main = "PACF for Y(t)")
 spec.pgram(sp.ts_2diff, log="no")
 
 #ARIMA Model Validation
 p2d2q1P0D0Q0<-arima(sp.ts, order=c(2, 2, 1), seasonal = list(order=c(0, 0, 0)))
-tsdiag(p2d2q1P0D0Q0, lag.max=40)
+tsdiag(p2d2q1P0D0Q0, lag.max=15)
 AIC(p2d2q1P0D0Q0)
-forecast(p2d2q1P0D0Q0, h=5)
+predp2d2q1P0D0Q0 <- forecast(p2d2q1P0D0Q0, h=5)
 
 # -----------------------------------------------------------------------------
 # Holt Winter
 # -----------------------------------------------------------------------------
+# Geoff notes to self: parameters are fit using sum of squares
+#                not the best criteria: try a grid of values and CV?
 
-hw <-HoltWinters(sp.ts.diff, alpha=0.2, beta=0.4, gamma=FALSE) 
+# N <- 5
+# K <- 5
+# n <- length(sp.ts)
+# 
+# # parameter grid
+# n_alpha <- 100
+# n_beta <- 100
+# alpha <- seq(0,1,length.out = n_alpha)
+# beta <- seq(0,1,length.out = n_beta)
+# 
+# # reform data frame and intermediates
+# mspe <- matrix(nrow = n_alpha, ncol = n_beta)
+# indices <- 1:n %% K + 1
+# 
+# # shuffle indices for IID assumption
+# set.seed(kSeed) # set seed for reproducibility
+# indices <- sample(indices, size = length(indices), replace=FALSE)
+# 
+# for (j in 1:N) {
+#   # hold responses for this run of K-fold CV
+#   pred <- rep(n, 0)
+#   for (i in 1:K) {
+#     testIvec <- indices == i
+#     trainIvec <- !testIvec
+#     # model matrix includes response variable
+#     XTrain <- X[trainIvec, ]
+#     XTest <- X[testIvec, ]
+#     
+#     
+#   }
+#   
+#   # zero out any NaN cases from BoxCox models
+#   mspe[j] <- mean((pred - y)^2)
+# }
+# 
+# }
+# 
+# for (a in alpha) {
+#   for (b in beta) {
+#     
+#     
+#   }
+# }
+# 
+# for (j in 1:N) {
+#   # hold responses for this run of K-fold CV
+#   pred <- rep(n, 0)
+#   for (i in 1:K) {
+#     testIvec <- indices == i
+#     trainIvec <- !testIvec
+#     # model matrix includes response variable
+#     XTrain <- X[trainIvec, ]
+#     XTest <- X[testIvec, ]
+#   }
+#   
+#   # zero out any NaN cases from BoxCox models
+#   mspe[j] <- mean((pred - y)^2)
+# }
+
+hw1 <-HoltWinters(sp.ts,alpha=.3, beta=NULL, gamma=FALSE)
 plot(hw)
+forecast(hw, h =5)
 
 # -----------------------------------------------------------------------------
 # Model Two: SARIMA models for data after taking forward ratio, applying 
@@ -121,24 +196,31 @@ AIC(p3d0q0P0D0Q0)
 # -----------------------------------------------------------------------------
 # Model Three: GARCH
 # -----------------------------------------------------------------------------
+# needs more data...
+# p3d0q0P0D0Q0$residuals
+# library(rugarch)
+# library(fGarch)
+# s2 <- (sp.ts^2)
+# plot(s2)
+# acf(s2, lag.max = 1000)
+# # experiment with GARCH model using parameters from best SARIMA model
+# # financial markets are modelled better by t-distribution, use "std"
+# specs<-ugarchspec(
+#   variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
+#   mean.model = list(armaOrder = c(3, 0), include.mean = TRUE),
+#   distribution.model = "std"
+# )
+# #
+# N <- length(sp.ts)
+# # TODO: what is the definition of a return? Why multiply by 100 and take ratio of successive days?
+# sp.ts.returns=100*(log(sp.ts[2:N])-log(sp.ts[1:(N-1)]))
+# modelfit = ugarchfit(spec = specs, data = sp.ts.returns)
+# modelfit
+# plot(modelfit)
 
-p3d0q0P0D0Q0$residuals
-library(rugarch)
-library(fGarch)
-s2 <- (sp.ts^2)
-plot(s2)
-acf(s2, lag.max = 1000)
-# experiment with GARCH model using parameters from best SARIMA model
-# financial markets are modelled better by t-distribution, use "std"
-specs<-ugarchspec(
-  variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
-  mean.model = list(armaOrder = c(3, 0), include.mean = TRUE),
-  distribution.model = "std"
-)
-#
-N <- length(sp.ts)
-# TODO: what is the definition of a return? Why multiply by 100 and take ratio of successive days?
-sp.ts.returns=100*(log(sp.ts[2:N])-log(sp.ts[1:(N-1)]))
-modelfit = ugarchfit(spec = specs, data = sp.ts.returns)
-modelfit
-plot(modelfit)
+# -----------------------------------------------------------------------------
+# Model comparisons
+# -----------------------------------------------------------------------------
+
+actual<-c(2037.05, 2055.01, 2063.95, 2059.74, 2072.78)
+MSE_model1 <- mean((predp2d2q1P0D0Q0$mean - actual)^2)
