@@ -37,8 +37,8 @@ library(forecast)
 # -----------------------------------------------------------------------------
 
 # Uncomment the correct directory for your computer (or add it!):
-# dir <- "~/Documents/time_series_443/PROJECT/SP500janmar.csv" # Geoff
-dir <- "~/Documents/STAT443/Stat443_project/timeseries443/SP500janmar.csv" # Wendy
+dir <- "~/Documents/time_series_443/PROJECT/SP500janmar.csv" # Geoff
+#dir <- "~/Documents/STAT443/Stat443_project/timeseries443/SP500janmar.csv" # Wendy
 
 spdata <- read.csv(dir, na.strings=".")
 impute_avg <- function(i, df) {
@@ -68,7 +68,7 @@ pacf(sp.ts)
 # Evaluate whether frequency-domain analysis in time series is appropriate
 # -----------------------------------------------------------------------------
 spectrum <- spec.pgram(sp.ts, log="no", 
-           main="S&P 500: 64 Observations\nRaw Periodogram")
+                       main="S&P 500: 64 Observations\nRaw Periodogram")
 1 / spectrum$freq[which.max(spectrum$spec)]
 # next peak occurs at frequency index 4
 1 / spectrum$freq[4]
@@ -84,8 +84,8 @@ ts.plot(sp.ts_1diff, main="First Difference of S&P 500 Series, X(t)",
         xlab="Time (days since 01/04/2016)", ylab="X(t) - X(t+1)")
 sp.ts_2diff <- diff(sp.ts_1diff, 1)
 ts.plot(sp.ts_2diff, main="First Difference of X(t), Y(t)", 
-                            xlab="Time (days since 01/04/2016)",
-                  ylab="Y(t) = X(t) - 2X(t-1) + X(t+2)")
+        xlab="Time (days since 01/04/2016)",
+        ylab="Y(t) = X(t) - 2X(t-1) + X(t+2)")
 par(mfrow=c(1,2)) # plot side by side
 acf(sp.ts_2diff, main = "ACF for Y(t)")
 pacf(sp.ts_2diff, main = "PACF for Y(t)")
@@ -172,7 +172,7 @@ forecast(hw, h =5)
 # -----------------------------------------------------------------------------
 
 #Lag constant
-days <- 0
+days <- 1
 
 #Take the forward ratio, applying log function, then add 100
 sp.ts.ratio <- lagratio(sp.ts, lag = days, recursion = 1, direction = "forward")
