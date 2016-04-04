@@ -178,10 +178,15 @@ days <- 1
 sp.ts.ratio <- lagratio(sp.ts, lag = days, recursion = 1, direction = "forward")
 sp.ts.ratio.log.100 <- log(sp.ts.ratio) + 100
 
-ts.plot(sp.ts.ratio.log.100)
-acf(sp.ts.ratio.log.100)
-pacf(sp.ts.ratio.log.100)
-spec.pgram(sp.ts.ratio.log.100, log="no")
+ts.plot(sp.ts.ratio.log.100, main="Log Forward Ratio of S&P 500 Serie, X(t), plus 100", 
+        xlab="Time (days since 01/04/2016)", ylab="log ( X(t+1) / X(t) ) + 100")
+
+par(mfrow=c(1,2)) # plot side by side
+acf(sp.ts.ratio.log.100, main = "ACF for W(t)")
+pacf(sp.ts.ratio.log.100, main = "PACF for W(t)")
+
+par(mfrow=c(1,1)) 
+spec.pgram(sp.ts.ratio.log.100, log="no", main = "W(t) Raw Periodogram")
 
 #ARIMA Model Validation
 p3d0q0P0D0Q0<-arima(sp.ts.ratio.log.100, order=c(3, 0, 0), seasonal = list(order=c(0, 0, 0)))
