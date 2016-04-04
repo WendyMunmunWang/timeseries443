@@ -40,7 +40,7 @@ library(forecast)
 dir <- "~/Documents/time_series_443/PROJECT/SP500janmar.csv" # Geoff
 #dir <- "~/Documents/STAT443/Stat443_project/timeseries443/SP500janmar.csv" # Wendy
 
-spdata <- read.csv(dir, na.strings=".")
+spdata <- read.csv(dir, na.strings="NA")
 impute_avg <- function(i, df) {
   df[i] <- (df[i-1] + df[i+1]) / 2
   df
@@ -58,7 +58,7 @@ sp.ts <- ts(spdata.full$VALUE)
 # -----------------------------------------------------------------------------
 
 # View(spdata)
-sp.ts <- ts(rev(spdata$Adj.Close))
+sp.ts <- ts(rev(spdata$VALUE))
 ts.plot(sp.ts, main = "S&P 500: 64 Observations", ylab="Closing Price", 
         xlab="Time (business days since 01/04/2016)")
 acf(sp.ts, lag.max=40)
@@ -163,8 +163,8 @@ predp2d2q1P0D0Q0 <- forecast(p2d2q1P0D0Q0, h=5)
 # }
 
 hw1 <-HoltWinters(sp.ts,alpha=.3, beta=NULL, gamma=FALSE)
-plot(hw)
-forecast(hw, h =5)
+plot(hw1)
+forecast(hw1, h =5)
 
 # -----------------------------------------------------------------------------
 # Model Two: SARIMA models for data after taking forward ratio, applying 
