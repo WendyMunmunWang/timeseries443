@@ -95,7 +95,7 @@ spec.pgram(sp.ts_2diff, log="no")
 p2d2q1P0D0Q0<-arima(sp.ts, order=c(2, 2, 1), seasonal = list(order=c(0, 0, 0)))
 tsdiag(p2d2q1P0D0Q0, lag.max=15)
 AIC(p2d2q1P0D0Q0)
-mean(sum(p2d2q1P0D0Q0$residuals))  # MSE of the model
+mean(sum((p2d2q1P0D0Q0$residuals)^2))  # MSE of the model
 predp2d2q1P0D0Q0 <- forecast(p2d2q1P0D0Q0, h=5)
 
 # -----------------------------------------------------------------------------
@@ -193,7 +193,7 @@ spec.pgram(sp.ts.ratio.log.100, log="no", main = "W(t) Raw Periodogram")
 p1d0q1P0D0Q0<-arima(sp.ts.ratio.log.100, order=c(1, 0, 1), seasonal = list(order=c(0, 0, 0)))
 tsdiag(p1d0q1P0D0Q0, gof.lag = 40)
 AIC(p1d0q1P0D0Q0)
-mean(sum(p1d0q1P0D0Q0$residuals))  # MSE of the model
+mean(sum((p1d0q1P0D0Q0$residuals)^2))  # MSE of the model
 
 # Ratio stuff
 # take data weekly, every friday
