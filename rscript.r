@@ -95,6 +95,7 @@ spec.pgram(sp.ts_2diff, log="no")
 p2d2q1P0D0Q0<-arima(sp.ts, order=c(2, 2, 1), seasonal = list(order=c(0, 0, 0)))
 tsdiag(p2d2q1P0D0Q0, lag.max=15)
 AIC(p2d2q1P0D0Q0)
+mean(sum(p2d2q1P0D0Q0$residuals))  # MSE of the model
 predp2d2q1P0D0Q0 <- forecast(p2d2q1P0D0Q0, h=5)
 
 # -----------------------------------------------------------------------------
@@ -178,8 +179,8 @@ days <- 1
 sp.ts.ratio <- lagratio(sp.ts, lag = days, recursion = 1, direction = "forward")
 sp.ts.ratio.log.100 <- log(sp.ts.ratio) + 100
 
-ts.plot(sp.ts.ratio.log.100, main="Log Forward Ratio of S&P 500 Serie, X(t), plus 100", 
-        xlab="Time (days since 01/04/2016)", ylab="log ( X(t+1) / X(t) ) + 100")
+ts.plot(sp.ts.ratio.log.100, main="W(t), Log Forward Ratio of S&P 500 Serie, X(t), plus 100", 
+        xlab="Time (days since 01/04/2016)", ylab="W(t) = log ( X(t+1) / X(t) ) + 100")
 
 par(mfrow=c(1,2)) # plot side by side
 acf(sp.ts.ratio.log.100, main = "ACF for W(t)")
@@ -189,9 +190,10 @@ par(mfrow=c(1,1))
 spec.pgram(sp.ts.ratio.log.100, log="no", main = "W(t) Raw Periodogram")
 
 #ARIMA Model Validation
-p3d0q0P0D0Q0<-arima(sp.ts.ratio.log.100, order=c(3, 0, 0), seasonal = list(order=c(0, 0, 0)))
-tsdiag(p3d0q0P0D0Q0, gof.lag = 40)
-AIC(p3d0q0P0D0Q0)
+p1d0q1P0D0Q0<-arima(sp.ts.ratio.log.100, order=c(1, 0, 1), seasonal = list(order=c(0, 0, 0)))
+tsdiag(p1d0q1P0D0Q0, gof.lag = 40)
+AIC(p1d0q1P0D0Q0)
+mean(sum(p1d0q1P0D0Q0$residuals))  # MSE of the model
 
 # Ratio stuff
 # take data weekly, every friday
