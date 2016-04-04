@@ -191,6 +191,7 @@ spec.pgram(sp.ts.ratio.log.100, log="no", main = "W(t) Raw Periodogram")
 
 #ARIMA Model Validation
 p1d0q1P0D0Q0<-arima(sp.ts.ratio.log.100, order=c(1, 0, 1), seasonal = list(order=c(0, 0, 0)))
+p1d0q1P0D0Q0
 tsdiag(p1d0q1P0D0Q0, gof.lag = 40)
 AIC(p1d0q1P0D0Q0)
 mean(sum((p1d0q1P0D0Q0$residuals)^2))  # MSE of the model
