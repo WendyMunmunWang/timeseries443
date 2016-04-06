@@ -24,7 +24,7 @@ install_new_packages <- function(packages) {
 # Set up local R environment
 # -----------------------------------------------------------------------------
 
-packages <- c("astsa", "dplyr", "FSA", "rugarch", "HoltWinters")
+packages <- c("astsa", "dplyr", "FSA", "rugarch", "HoltWinters", "forecast")
 install_new_packages(packages)
 library(FSA)
 library(astsa)
@@ -196,6 +196,19 @@ tsdiag(p1d0q1P0D0Q0, gof.lag = 40)
 AIC(p1d0q1P0D0Q0)
 mean(sum((p1d0q1P0D0Q0$residuals)^2))  # MSE of the model
 
+predp1d0q1P0D0Q0 <- forecast(p1d0q1P0D0Q0, h=5)
+pred.w <- predp1d0q1P0D0Q0$mean
+pred.x.1 <- (exp(100.01869 - 100)) * 2035.94 
+pred.x.2 <- exp(pred.w[1] - 100) * pred.x.1
+pred.x.3 <- exp(pred.w[2] - 100) * pred.x.1
+pred.x.4 <- exp(pred.w[3] - 100) * pred.x.1
+pred.x.5 <- exp(pred.w[4] - 100) * pred.x.1
+pred.x <- c(pred.x.1, pred.x.2, pred.x.3, pred.x.4, pred.x.5)
+
+
+
+
+
 # Ratio stuff
 # take data weekly, every friday
 # e.g. this friday is x, next onis y, lpog ratio
@@ -232,3 +245,4 @@ mean(sum((p1d0q1P0D0Q0$residuals)^2))  # MSE of the model
 
 actual<-c(2037.05, 2055.01, 2063.95, 2059.74, 2072.78)
 MSE_model1 <- mean((predp2d2q1P0D0Q0$mean - actual)^2)
+MSE_model2 <- mean((pred.x - actual)^2)
