@@ -1,7 +1,6 @@
 # -----------------------------------------------------------------------------
-# Function declarations
+# Script helper function declarations
 # -----------------------------------------------------------------------------
-# new comment
 install_new_packages <- function(packages) {
   #' Installs each package in parameter packages if not already installed
   #' 
@@ -20,94 +19,163 @@ install_new_packages <- function(packages) {
   }
 }
 
+impute_avg <- function(i, vec) {
+  #' Given a numeric vector vec and index i s.t. 1 < i < length(vec),
+  #' replaces i with average of surrounding values
+  #' 
+  #' @param i Index i s.t. 1 < i < length(vec)
+  #' @param vec A numeric vector
+  if (i == 1 || i == length(vec)) {
+    warning("Function impute_avg failed: index cannot be on endpoint")
+    return(vec)
+  }
+  vec[i] <- (vec[i-1] + vec[i+1]) / 2
+  vec
+}
+
+P <- function(k, I) {
+  #' Returns sum of first k Fourier frequencies for spectrum I
+  # function for vapply to calculate over k
+  P_x <- function(x) {
+    omega_p <- 1:x
+    sum(I[omega_p])
+  }
+  # FUN.VALUE = 0 ensures numeric vector output
+  vapplS(k, P_x, numeric(1))
+}
+
+cumulative_periodogram <- function(I, N) {
+  #' Given output of spectrum and number of observations 
+  #' returns cumulative periodogram
+  M <- floor(N / 2) # max{n \in Z : n <= N/2}, N = 18
+  
+  
+  C_k <- P(1:M, I) / P(M, I) # For k in 1 to M, C_k = P_k / P_M
+  kOverM <- 1:M / M
+  # return C_k and M
+  list(C = C_k, kOverM = kOverM, M = M)
+}
+
+plot_D_hypothesis <- function(C_k,kOverM, M, title) {
+  #' Plots cumulative periodogram and performs hypothesis test under
+  #' null that series is white noise using test statistic:
+  #'          D_c := \frac{1.358}{\sqrt{M-1}} 
+  #' for M = floor(N/2), N = length(series). If largest absolute distance
+  #' from y=x to cumulative periodgram is greater than D_c, reject null.
+  #' @return list containing the test statistic and largest horizontal 
+  #'              difference in absolute value
+  plot(kOverM,C_k, type="l", ylab = "C_k", xlab = "k / M", main = title)
+  lines(kOverM, kOverM, type="l", lty = "11")
+  #segments(kOverM, C_k, C_k, C_k, col="lightgrey", lty = "dashed")
+  m <- which.maY(abs(C_k - kOverM))
+  points(c(kOverM[m],  C_k[m]), c(C_k[m], C_k[m]), col="black", pch=5)
+  segments(kOverM[m], C_k[m], C_k[m], C_k[m], col="black", lwd="2")
+  
+  # Form D line
+  invisible(D_c <- 1.358 / sqrt(M - 1))
+  lines(kOverM - D_c, kOverM, type="l", col="black", lty = "dashed")
+  lines(kOverM + D_c, kOverM, type="l", col="black", lty = "dashed")
+  
+  # return largest value for analysis
+  list(D_c = D_c, max = abs(C_k[m] - kOverM[m]))
+}
+
 # -----------------------------------------------------------------------------
 # Set up local R environment
 # -----------------------------------------------------------------------------
 
-packages <- c("astsa", "dplyr", "FSA", "rugarch", "HoltWinters", "forecast")
+packages <- c("astsa", "dplyr", "FSA", "HoltWinters", "forecast")
 install_new_packages(packages)
-library(FSA)
-library(astsa)
-library(zoo)
-library(HoltWinters)
-library(forecast)
+librarS(FSA)
+librarS(astsa)
+librarS(zoo)
+librarS(HoltWinters)
+librarS(forecast)
 
 # -----------------------------------------------------------------------------
 # Read data
 # -----------------------------------------------------------------------------
-
 # Uncomment the correct directory for your computer (or add it!):
 dir <- "~/Documents/time_series_443/PROJECT/SP500janmar.csv" # Geoff
-#dir <- "~/Documents/STAT443/Stat443_project/timeseries443/SP500janmar.csv" # Wendy
+validation_dir <- "~/Documents/time_series_443/PROJECT/SP500validation.csv"
 
 spdata <- read.csv(dir, na.strings=".")
 spdata$DATE <- as.Date(spdata$DATE, format="%y-%m-%d")
-impute_avg <- function(i, df) {
-  df[i] <- (df[i-1] + df[i+1]) / 2
-  df
-}
 spdata.full <- spdata
 for (i in which(!complete.cases(spdata.full))) {
   spdata.full$VALUE <- impute_avg(i, spdata.full$VALUE)
 }
-# drop additional cases where two values are missing
-#spdata.full <- spdata.full[complete.cases(spdata.full),]
 sp.ts <- ts(spdata.full$VALUE)
 
 # -----------------------------------------------------------------------------
-# Explore data and candidate SARIMA models
+# Explore data and models
 # -----------------------------------------------------------------------------
-
 # View(spdata)
 # sp.ts <- ts(rev(spdata$VALUE))
-ts.plot(sp.ts, main = "S&P 500: 64 Observations", ylab="Index Value", 
-        xlab="Time (business days since 01/04/2016)")
+plot(spdata.full$DATE, spdata.full$VALUE, type = "l",  
+     main = "X(t): 59 Daily Index Values from S&P 500", ylab="X(t) (Index Value)", 
+     xlab="Date")
 acf(sp.ts, lag.max=40)
 pacf(sp.ts)
 
 # -----------------------------------------------------------------------------
-# Evaluate whether frequency-domain analysis in time series is appropriate
+# Evaluate whether frequency-domain analysis in time series is useful
 # -----------------------------------------------------------------------------
 spectrum <- spec.pgram(sp.ts, log="no", 
-                       main="S&P 500: 64 Observations\nRaw Periodogram")
-1 / spectrum$freq[which.max(spectrum$spec)]
+                       main="S&P 500: 59 Observations\nRaw Periodogram")
+1 / spectrum$freq[which.maY(spectrum$spec)]
 # next peak occurs at frequency index 4
 1 / spectrum$freq[4]
 # Conclusion: frequency domain analysis will not be effective here
 
 # -----------------------------------------------------------------------------
-# Model One: SARIMA models for data with first difference
+# MODEL ONE: ARIMA models for data with second-differencing
 # -----------------------------------------------------------------------------
-
-#Take the first difference
+# Take the first difference Y(t)
 sp.ts_1diff <- diff(sp.ts, 1)
-ts.plot(sp.ts_1diff, main="First Difference of S&P 500 Series, X(t)", 
-        xlab="Time (days since 01/04/2016)", ylab="X(t) - X(t+1)")
+ts.plot(sp.ts_1diff, main=" Y(t): First Difference of S&P 500 Series X(t)", 
+        xlab="Time (business days since 01/04/2016)", ylab="Y(t) - Y(t+1)")
+# Still trend at start. Take the second difference S(t) = Y(t) - Y(t+1)
+par(mfrow=1)
 sp.ts_2diff <- diff(sp.ts_1diff, 1)
-ts.plot(sp.ts_2diff, main="First Difference of X(t), Y(t)", 
-        xlab="Time (days since 01/04/2016)",
-        ylab="Y(t) = X(t) - 2X(t-1) + X(t+2)")
+ts.plot(sp.ts_2diff, main="First Difference of Y(t), S(t)", 
+        xlab="Time (business days since 01/04/2016)",
+        ylab="S(t) = Y(t) - 2Y(t-1) + Y(t+2)")
 par(mfrow=c(1,2)) # plot side by side
-acf(sp.ts_2diff, main = "ACF for Y(t)")
-pacf(sp.ts_2diff, main = "PACF for Y(t)")
+acf(sp.ts_2diff, main = "ACF for S(t)")
+pacf(sp.ts_2diff, main = "PACF for S(t)")
 
-#ARIMA Model Validation
-p2d2q1P0D0Q0<-arima(sp.ts, order=c(2, 2, 1), seasonal = list(order=c(0, 0, 0)))
-tsdiag(p2d2q1P0D0Q0, lag.max=15)
+#ARIMA Model Selection and Validation -----------------------------------------
+
+# Try simplest models possible on S(t) with MA(1) component
+p2d2q0P0D0Q0<-arima(sp.ts, order=c(2, 2, 0), 
+                    seasonal = list(order=c(0, 0, 0)))
+tsdiag(p2d2q0P0D0Q0, gof.lag = 15) # Passes Ljung-Box test
+AIC(p2d2q0P0D0Q0)
+p2d2q1P0D0Q0<-arima(sp.ts, order=c(2, 2, 1), 
+                    seasonal = list(order=c(0, 0, 0)))
+tsdiag(p2d2q1P0D0Q0, gof.lag=15) # Good diagnostics
 AIC(p2d2q1P0D0Q0)
-mean(sum((p2d2q1P0D0Q0$residuals)^2))  # MSE of the model
-predp2d2q1P0D0Q0 <- forecast(p2d2q1P0D0Q0, h=5)
+
+# Try (2,2,1)x(0,0,0)_0 and  (2,2,0)x(0,0,0)_0  for predictions
+p2d2q1P0D0Q0.pred <- forecast(p2d2q1P0D0Q0, h=5)
+p2d2q0P0D0Q0.pred <- forecast(p2d2q0P0D0Q0, h=5)
+
+tsdiag(p2d2q0P0D0Q0)
+tsdiag(p2d2q1P0D0Q0) 
 
 # -----------------------------------------------------------------------------
-# Exponential smoothing for baseline comparison
+# Exponential smoothing for baseline MSPE comparison
 # -----------------------------------------------------------------------------
 
-expSmooth <-HoltWinters(sp.ts,alpha=NULL, beta=FALSE, gamma=FALSE)
-plot(hw1)
-expSmooth.pred <- forecast(hw1, h = 5)
-
+expSmooth <-HoltWinters(sp.ts,alpha=NULL, beta=NULL, gamma=FALSE)
+plot(expSmooth, col.predicted = "black", lty.predicted = 2, 
+     main="Holt's Exponential Smoothing of X(t)")
+expSmooth$alpha
+expSmooth$beta
+expSmooth.pred <- forecast(expSmooth, h=5)
 # -----------------------------------------------------------------------------
-# Model Two: SARIMA models for data after taking forward ratio, applying 
+# MODEL TWO: ARIMA models for data after taking forward ratio, applying 
 #            log function, then add 100.
 # -----------------------------------------------------------------------------
 
@@ -115,46 +183,95 @@ expSmooth.pred <- forecast(hw1, h = 5)
 days <- 1
 
 #Take the forward ratio, applying log function, then add 100
-sp.ts.ratio <- lagratio(sp.ts, lag = days, recursion = 1, direction = "forward")
+sp.ts.ratio <- lagratio(sp.ts, lag = days, recursion = 1, 
+                        direction = "forward")
 sp.ts.ratio.log.100 <- log(sp.ts.ratio) + 100
 
-ts.plot(sp.ts.ratio.log.100, main="W(t), Log Forward Ratio of S&P 500 Serie, X(t), plus 100", 
-        xlab="Time (days since 01/04/2016)", ylab="W(t) = log ( X(t+1) / X(t) ) + 100")
+ts.plot(sp.ts.ratio.log.100,
+        main="W(t), Log Forward Ratio of S&P 500 Series, Y(t), plus 100", 
+        xlab="Time (days since 01/04/2016)", 
+        ylab="W(t) = log ( Y(t+1) / Y(t) ) + 100")
 
 par(mfrow=c(1,2)) # plot side by side
 acf(sp.ts.ratio.log.100, main = "ACF for W(t)")
 pacf(sp.ts.ratio.log.100, main = "PACF for W(t)")
 
-par(mfrow=c(1,1)) 
-spec.pgram(sp.ts.ratio.log.100, log="no", main = "W(t) Raw Periodogram")
 
-#ARIMA Model Validation
-p1d0q1P0D0Q0<-arima(sp.ts.ratio.log.100, order=c(1, 0, 1), seasonal = list(order=c(0, 0, 0)))
+# -----------------------------------------------------------------------------
+# Fit baseline exponential smoothing model for MSPE comparison
+# -----------------------------------------------------------------------------
+
+# baseline predictor is mean
+exp_lag <-HoltWinters(sp.ts.ratio.log.100,alpha=NULL, beta=NULL, gamma=FALSE)
+plot(exp_lag, col.predicted = "black", lty.predicted = 2,
+     main="Holt's Exponential Smoothing of W(t)")
+pred.lagratio_smooth <- forecast(exp_lag, h=5)
+exp_lag$alpha
+exp_lag$beta
+par(mfrow=c(1,1)) 
+
+# -----------------------------------------------------------------------------
+# Evaluate if frequency-domain analysis for log-ratio series is appropriate
+# -----------------------------------------------------------------------------
+
+w_spec <- spec.pgram(sp.ts.ratio.log.100, log="no", 
+                     main = "W(t) Raw Periodogram")
+# not clear if a frequency is dominating here. try smoothing periodogram
+w_spec_smooth <- spec.pgram(sp.ts.ratio.log.100, log="no", 
+                            main = "W(t) Smoothed Periodogram, spans = 6", 
+                            spans=6)
+1 / w_spec_smooth$freq[which.maY(w_spec_smooth$spec)]
+
+# ARIMA Model Selection and Validation -----------------------------------------
+# is W(t) consistent with a realization of white noise?
+p0d0q0P0D0Q0<-arima(sp.ts.ratio.log.100, order=c(0, 0, 0),
+                    seasonal = list(order=c(0, 0, 0)))
+cpgram(sp.ts.ratio.log.100)
+par(mfrow=c(1,1))
+AIC(p0d0q0P0D0Q0)
+tsdiag(p0d0q0P0D0Q0)
+w_spec$spec
+w_spec$n.used
+
+# Do D_c test from Assignment 2
+res <- cumulative_periodogram(w_spec$spec, w_spec$n.used)
+C_k <- res$C
+kOverM <- res$kOverM
+M <- res$M
+plot_D_hypothesis(C_k, kOverM, M,  "Cumu. Periodogram: W(t)")
+plot(kOverM,C_k, type="l", ylab = "C_k", xlab = "k / M", 
+     main = "Cumu. Periodogram: W(t)")
+pred.whitenoise <- forecast(p0d0q0P0D0Q0, h=5)
+
+
+p1d0q1P0D0Q0<-arima(sp.ts.ratio.log.100, order=c(1, 0, 1), 
+                    seasonal = list(order=c(0, 0, 0)))
 p1d0q1P0D0Q0
-tsdiag(p1d0q1P0D0Q0, gof.lag = 40)
+tsdiag(p1d0q1P0D0Q0)
 AIC(p1d0q1P0D0Q0)
 mean(sum((p1d0q1P0D0Q0$residuals)^2))  # MSE of the model
 
 predp1d0q1P0D0Q0 <- forecast(p1d0q1P0D0Q0, h=5)
+# Backtransform predictions onto original scale
 pred.w <- predp1d0q1P0D0Q0$mean
-pred.x.1 <- (exp(100.01869 - 100)) * 2035.94 
-pred.x.2 <- exp(pred.w[1] - 100) * pred.x.1
-pred.x.3 <- exp(pred.w[2] - 100) * pred.x.1
-pred.x.4 <- exp(pred.w[3] - 100) * pred.x.1
-pred.x.5 <- exp(pred.w[4] - 100) * pred.x.1
-pred.x <- c(pred.x.1, pred.x.2, pred.x.3, pred.x.4, pred.x.5)
-
-# Ratio stuff
-# take data weekly, every friday
-# e.g. this friday is x, next onis y, lpog ratio
 
 # -----------------------------------------------------------------------------
 # Model comparisons
 # -----------------------------------------------------------------------------
+validation_set <- read.csv(validation_dir, na.strings=".")
+actual <- validation_set$VALUE[1:5]
 
-actual<-c(2037.05, 2055.01, 2063.95, 2059.74, 2072.78)
-MSE_baseline <- mean((expSmooth.pred$mean-actual)^2)
-MSE_model1 <- mean((predp2d2q1P0D0Q0$mean - actual)^2)
-# for lag ratio comparison
-actual.ratio <- lagratio(actual, lag = days, recursion = 1, direction = "forward")
-MSE_model2 <- mean((pred.x - actual)^2)
+MSPE_model1_base <- mean((expSmooth.pred$mean-actual)^2)
+MSPE_model1 <- mean((p2d2q1P0D0Q0.pred$mean - actual)^2)
+MSPE_model1.alt <- mean((p2d2q1P0D0Q0.pred$mean - actual)^2)
+# decide between MA(1) model and ARMA(2,1) for S(t)
+MSPE_model1 < MSPE_model1.alt
+# check best model against baseline
+MSPE_model1 < MSPE_model1_base
+actual_lagged <- log(lagratio(validation_set$VALUE[1:6], lag = 1,
+                              recursion = 1, direction = "forward")) + 100
+MSPE_model2_holt <- mean((pred.lagratio_smooth$mean - actual_lagged)^2)
+MSPE_model2_noise <-mean((pred.whitenoise$mean-actual_lagged)^2)
+MSPE_model2 <- mean((pred.w - actual_lagged)^2)
+# check against baseline
+MSPE_model2 < MSPE_model2_noise
