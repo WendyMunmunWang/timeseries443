@@ -139,9 +139,9 @@ predp1d0q1P0D0Q0 <- forecast(p1d0q1P0D0Q0, h=5)
 pred.w <- predp1d0q1P0D0Q0$mean
 pred.x.1 <- (exp(100.01869 - 100)) * 2035.94 
 pred.x.2 <- exp(pred.w[1] - 100) * pred.x.1
-pred.x.3 <- exp(pred.w[2] - 100) * pred.x.1
-pred.x.4 <- exp(pred.w[3] - 100) * pred.x.1
-pred.x.5 <- exp(pred.w[4] - 100) * pred.x.1
+pred.x.3 <- exp(pred.w[2] - 100) * pred.x.2
+pred.x.4 <- exp(pred.w[3] - 100) * pred.x.3
+pred.x.5 <- exp(pred.w[4] - 100) * pred.x.4
 pred.x <- c(pred.x.1, pred.x.2, pred.x.3, pred.x.4, pred.x.5)
 
 # Ratio stuff
