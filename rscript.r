@@ -40,7 +40,8 @@ library(forecast)
 dir <- "~/Documents/time_series_443/PROJECT/SP500janmar.csv" # Geoff
 #dir <- "~/Documents/STAT443/Stat443_project/timeseries443/SP500janmar.csv" # Wendy
 
-spdata <- read.csv(dir, na.strings="NA")
+spdata <- read.csv(dir, na.strings=".")
+spdata$DATE <- as.Date(spdata$DATE, format="%y-%m-%d")
 impute_avg <- function(i, df) {
   df[i] <- (df[i-1] + df[i+1]) / 2
   df
@@ -50,7 +51,7 @@ for (i in which(!complete.cases(spdata.full))) {
   spdata.full$VALUE <- impute_avg(i, spdata.full$VALUE)
 }
 # drop additional cases where two values are missing
-spdata.full <- spdata.full[complete.cases(spdata.full),]
+#spdata.full <- spdata.full[complete.cases(spdata.full),]
 sp.ts <- ts(spdata.full$VALUE)
 
 # -----------------------------------------------------------------------------
@@ -58,8 +59,8 @@ sp.ts <- ts(spdata.full$VALUE)
 # -----------------------------------------------------------------------------
 
 # View(spdata)
-sp.ts <- ts(rev(spdata$VALUE))
-ts.plot(sp.ts, main = "S&P 500: 64 Observations", ylab="Closing Price", 
+# sp.ts <- ts(rev(spdata$VALUE))
+ts.plot(sp.ts, main = "S&P 500: 64 Observations", ylab="Index Value", 
         xlab="Time (business days since 01/04/2016)")
 acf(sp.ts, lag.max=40)
 pacf(sp.ts)
@@ -89,7 +90,6 @@ ts.plot(sp.ts_2diff, main="First Difference of X(t), Y(t)",
 par(mfrow=c(1,2)) # plot side by side
 acf(sp.ts_2diff, main = "ACF for Y(t)")
 pacf(sp.ts_2diff, main = "PACF for Y(t)")
-spec.pgram(sp.ts_2diff, log="no")
 
 #ARIMA Model Validation
 p2d2q1P0D0Q0<-arima(sp.ts, order=c(2, 2, 1), seasonal = list(order=c(0, 0, 0)))
@@ -99,73 +99,12 @@ mean(sum((p2d2q1P0D0Q0$residuals)^2))  # MSE of the model
 predp2d2q1P0D0Q0 <- forecast(p2d2q1P0D0Q0, h=5)
 
 # -----------------------------------------------------------------------------
-# Holt Winter
+# Exponential smoothing for baseline comparison
 # -----------------------------------------------------------------------------
-# Geoff notes to self: parameters are fit using sum of squares
-#                not the best criteria: try a grid of values and CV?
 
-# N <- 5
-# K <- 5
-# n <- length(sp.ts)
-# 
-# # parameter grid
-# n_alpha <- 100
-# n_beta <- 100
-# alpha <- seq(0,1,length.out = n_alpha)
-# beta <- seq(0,1,length.out = n_beta)
-# 
-# # reform data frame and intermediates
-# mspe <- matrix(nrow = n_alpha, ncol = n_beta)
-# indices <- 1:n %% K + 1
-# 
-# # shuffle indices for IID assumption
-# set.seed(kSeed) # set seed for reproducibility
-# indices <- sample(indices, size = length(indices), replace=FALSE)
-# 
-# for (j in 1:N) {
-#   # hold responses for this run of K-fold CV
-#   pred <- rep(n, 0)
-#   for (i in 1:K) {
-#     testIvec <- indices == i
-#     trainIvec <- !testIvec
-#     # model matrix includes response variable
-#     XTrain <- X[trainIvec, ]
-#     XTest <- X[testIvec, ]
-#     
-#     
-#   }
-#   
-#   # zero out any NaN cases from BoxCox models
-#   mspe[j] <- mean((pred - y)^2)
-# }
-# 
-# }
-# 
-# for (a in alpha) {
-#   for (b in beta) {
-#     
-#     
-#   }
-# }
-# 
-# for (j in 1:N) {
-#   # hold responses for this run of K-fold CV
-#   pred <- rep(n, 0)
-#   for (i in 1:K) {
-#     testIvec <- indices == i
-#     trainIvec <- !testIvec
-#     # model matrix includes response variable
-#     XTrain <- X[trainIvec, ]
-#     XTest <- X[testIvec, ]
-#   }
-#   
-#   # zero out any NaN cases from BoxCox models
-#   mspe[j] <- mean((pred - y)^2)
-# }
-
-hw1 <-HoltWinters(sp.ts,alpha=.3, beta=NULL, gamma=FALSE)
+expSmooth <-HoltWinters(sp.ts,alpha=NULL, beta=FALSE, gamma=FALSE)
 plot(hw1)
-forecast(hw1, h =5)
+expSmooth.pred <- forecast(hw1, h = 5)
 
 # -----------------------------------------------------------------------------
 # Model Two: SARIMA models for data after taking forward ratio, applying 
@@ -205,44 +144,17 @@ pred.x.4 <- exp(pred.w[3] - 100) * pred.x.1
 pred.x.5 <- exp(pred.w[4] - 100) * pred.x.1
 pred.x <- c(pred.x.1, pred.x.2, pred.x.3, pred.x.4, pred.x.5)
 
-
-
-
-
 # Ratio stuff
 # take data weekly, every friday
 # e.g. this friday is x, next onis y, lpog ratio
-
-
-# -----------------------------------------------------------------------------
-# Model Three: GARCH
-# -----------------------------------------------------------------------------
-# needs more data...
-# p3d0q0P0D0Q0$residuals
-# library(rugarch)
-# library(fGarch)
-# s2 <- (sp.ts^2)
-# plot(s2)
-# acf(s2, lag.max = 1000)
-# # experiment with GARCH model using parameters from best SARIMA model
-# # financial markets are modelled better by t-distribution, use "std"
-# specs<-ugarchspec(
-#   variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
-#   mean.model = list(armaOrder = c(3, 0), include.mean = TRUE),
-#   distribution.model = "std"
-# )
-# #
-# N <- length(sp.ts)
-# # TODO: what is the definition of a return? Why multiply by 100 and take ratio of successive days?
-# sp.ts.returns=100*(log(sp.ts[2:N])-log(sp.ts[1:(N-1)]))
-# modelfit = ugarchfit(spec = specs, data = sp.ts.returns)
-# modelfit
-# plot(modelfit)
 
 # -----------------------------------------------------------------------------
 # Model comparisons
 # -----------------------------------------------------------------------------
 
 actual<-c(2037.05, 2055.01, 2063.95, 2059.74, 2072.78)
+MSE_baseline <- mean((expSmooth.pred$mean-actual)^2)
 MSE_model1 <- mean((predp2d2q1P0D0Q0$mean - actual)^2)
+# for lag ratio comparison
+actual.ratio <- lagratio(actual, lag = days, recursion = 1, direction = "forward")
 MSE_model2 <- mean((pred.x - actual)^2)
